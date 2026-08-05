@@ -405,11 +405,11 @@ Abra a aplicação web pelo servidor configurado no backend ou por um servidor l
 
 ## Autor
 
-**Nome:** preencher  
-**Curso/Turma:** preencher  
-**Disciplina:** Internet das Coisas III  
-**Instituição:** preencher  
-**Professor:** preencher  
+**Nome:** Caíque Augusto
+**Curso/Turma:** Sistemas de Informação  
+**Disciplina:** Tópicos Avançados em Robótica  
+**Instituição:** IFMG
+**Professor:** Charles Garrocho  
 
 ## Licença
 
