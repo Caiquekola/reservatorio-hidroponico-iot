@@ -13,7 +13,7 @@ const char* senha = "12345678";
 // CONFIGURACAO MQTT
 // ======================================================
 
-const char* MQTT_HOST = "ENDERECO_DO_BROKER";
+const char* MQTT_HOST = "10.90.50.240";
 const int MQTT_PORT = 1883;
 
 const char* MQTT_USERNAME = "USUARIO";
