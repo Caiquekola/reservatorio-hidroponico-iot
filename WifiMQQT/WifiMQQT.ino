@@ -233,7 +233,7 @@ void publicarEstadoAtuador(
 
   bool publicado = mqttClient.publish(
     TOPIC_STATE,
-    payload,
+    reinterpret_cast<const uint8_t*>(payload),
     tamanho,
     true
   );
@@ -675,7 +675,7 @@ void publicarTelemetria() {
   bool publicado =
     mqttClient.publish(
       TOPIC_TELEMETRY,
-      payload,
+      reinterpret_cast<const uint8_t*>(payload),
       tamanho,
       false
     );
