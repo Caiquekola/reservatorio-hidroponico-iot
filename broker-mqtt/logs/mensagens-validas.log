@@ -1,0 +1,1 @@
+{"receivedAt":"2026-09-29T22:58:21.715Z","topic":"irrigacao01/telemetry","deviceId":"irrigacao01","status":"VALIDA","data":{"deviceId":"irrigacao01","sensor":"ultrassonico","valid":true,"durationUs":2915,"value":50,"unit":"cm","sequence":1,"uptimeMs":1790722701709,"wifiRssi":-51,"actuatorState":false}}
