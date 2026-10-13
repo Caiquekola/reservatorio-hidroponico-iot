@@ -1,0 +1,87 @@
+# Execução real em 2026-10-13T23:23Z | Node v22.22.0 | Redis 7.0.15 | broker Aedes local
+# Consultas diretas no redis-cli logo após o teste
+
+127.0.0.1:6379> KEYS *
+ERR wrong number of arguments for 'keys' command
+
+
+127.0.0.1:6379> TYPE device:irrigacao01:state
+hash
+
+127.0.0.1:6379> TYPE device:irrigacao01:history
+zset
+
+127.0.0.1:6379> TYPE device:irrigacao01:presence
+hash
+
+127.0.0.1:6379> HGETALL device:irrigacao01:state
+deviceId
+irrigacao01
+sensor
+ultrassonico
+valid
+true
+value
+27.8
+unit
+cm
+sequence
+33717
+uptimeMs
+140000
+wifiRssi
+-54
+actuatorState
+true
+updatedAt
+2026-10-13T23:21:54.402Z
+topic
+irrigacao01/telemetry
+actuator
+bomba_simulada
+lastRequestId
+cmd-1791933714552
+actuatorUpdatedAt
+2026-10-13T23:21:54.555Z
+
+127.0.0.1:6379> HGET device:irrigacao01:state value
+27.8
+
+127.0.0.1:6379> ZCARD device:irrigacao01:history
+5
+
+127.0.0.1:6379> ZRANGE device:irrigacao01:history 0 -1 WITHSCORES
+{"receivedAt":"2026-10-13T23:21:53.785Z","sequence":33713,"valid":true,"value":42.3,"unit":"cm","wifiRssi":-50,"uptimeMs":120000,"actuatorState":false}
+1791933713785
+{"receivedAt":"2026-10-13T23:21:53.947Z","sequence":33714,"valid":true,"value":38.9,"unit":"cm","wifiRssi":-51,"uptimeMs":125000,"actuatorState":false}
+1791933713947
+{"receivedAt":"2026-10-13T23:21:54.099Z","sequence":33715,"valid":false,"value":null,"unit":"cm","wifiRssi":-52,"uptimeMs":130000,"actuatorState":false}
+1791933714099
+{"receivedAt":"2026-10-13T23:21:54.250Z","sequence":33716,"valid":true,"value":31.4,"unit":"cm","wifiRssi":-53,"uptimeMs":135000,"actuatorState":true}
+1791933714250
+{"receivedAt":"2026-10-13T23:21:54.402Z","sequence":33717,"valid":true,"value":27.8,"unit":"cm","wifiRssi":-54,"uptimeMs":140000,"actuatorState":true}
+1791933714402
+
+127.0.0.1:6379> ZRANGE device:irrigacao01:history 0 0 REV
+{"receivedAt":"2026-10-13T23:21:54.402Z","sequence":33717,"valid":true,"value":27.8,"unit":"cm","wifiRssi":-54,"uptimeMs":140000,"actuatorState":true}
+
+127.0.0.1:6379> HGETALL device:irrigacao01:presence
+deviceId
+irrigacao01
+status
+offline
+lastSeen
+2026-10-13T23:21:54.555Z
+lastSeenMs
+1791933714555
+lastTopic
+irrigacao01/availability
+offlineAt
+2026-10-13T23:21:55.365Z
+
+127.0.0.1:6379> TTL device:irrigacao01:heartbeat
+-2
+
+127.0.0.1:6379> SMEMBERS devices
+irrigacao01
+

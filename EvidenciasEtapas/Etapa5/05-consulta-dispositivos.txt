@@ -1,0 +1,8 @@
+# Execução real em 2026-10-13T23:23Z | Node v22.22.0 | Redis 7.0.15 | broker Aedes local
+# Comando: node consulta.js
+
+
+========================================
+ DISPOSITIVOS (SMEMBERS devices)
+========================================
+- irrigacao01

@@ -1,0 +1,156 @@
+# Execução real em 2026-10-13T23:23Z | Node v22.22.0 | Redis 7.0.15 | broker Aedes local
+# Comando: node gateway.js (saída durante o teste ponta a ponta)
+
+Redis conectado: redis://127.0.0.1:6379
+========================================
+ GATEWAY MQTT + REDIS INICIADO
+========================================
+Broker: mqtt://127.0.0.1:1883
+Redis: redis://127.0.0.1:6379
+Client ID: gateway-node-iot3
+Tópico assinado: +/telemetry
+Tópico assinado: +/state
+Tópico assinado: +/availability
+Aguardando mensagens...
+
+========================================
+ NOVA MENSAGEM MQTT
+========================================
+Tópico: irrigacao01/availability
+Dispositivo identificado: irrigacao01
+
+>>> DISPONIBILIDADE <<<
+Device ID: irrigacao01
+Status: ONLINE
+Persistido no Redis (disponibilidade):
+  HSET  device:irrigacao01:presence status=online
+  SETEX device:irrigacao01:heartbeat
+
+========================================
+ NOVA MENSAGEM MQTT
+========================================
+Tópico: irrigacao01/telemetry
+Dispositivo identificado: irrigacao01
+
+>>> MENSAGEM VÁLIDA <<<
+Device ID: irrigacao01
+Sensor: ultrassonico
+Valor: 42.3 cm
+Sequência: 33713
+RSSI: -50 dBm
+Persistido no Redis (telemetria):
+  HSET  device:irrigacao01:state
+  ZADD  device:irrigacao01:history
+  HSET  device:irrigacao01:presence
+  SETEX device:irrigacao01:heartbeat
+
+========================================
+ NOVA MENSAGEM MQTT
+========================================
+Tópico: irrigacao01/telemetry
+Dispositivo identificado: irrigacao01
+
+>>> MENSAGEM VÁLIDA <<<
+Device ID: irrigacao01
+Sensor: ultrassonico
+Valor: 38.9 cm
+Sequência: 33714
+RSSI: -51 dBm
+Persistido no Redis (telemetria):
+  HSET  device:irrigacao01:state
+  ZADD  device:irrigacao01:history
+  HSET  device:irrigacao01:presence
+  SETEX device:irrigacao01:heartbeat
+
+========================================
+ NOVA MENSAGEM MQTT
+========================================
+Tópico: irrigacao01/telemetry
+Dispositivo identificado: irrigacao01
+
+>>> MENSAGEM VÁLIDA <<<
+Device ID: irrigacao01
+Sensor: ultrassonico
+Valor: NULL cm
+Sequência: 33715
+RSSI: -52 dBm
+Persistido no Redis (telemetria):
+  HSET  device:irrigacao01:state
+  ZADD  device:irrigacao01:history
+  HSET  device:irrigacao01:presence
+  SETEX device:irrigacao01:heartbeat
+
+========================================
+ NOVA MENSAGEM MQTT
+========================================
+Tópico: irrigacao01/telemetry
+Dispositivo identificado: irrigacao01
+
+>>> MENSAGEM VÁLIDA <<<
+Device ID: irrigacao01
+Sensor: ultrassonico
+Valor: 31.4 cm
+Sequência: 33716
+RSSI: -53 dBm
+Persistido no Redis (telemetria):
+  HSET  device:irrigacao01:state
+  ZADD  device:irrigacao01:history
+  HSET  device:irrigacao01:presence
+  SETEX device:irrigacao01:heartbeat
+
+========================================
+ NOVA MENSAGEM MQTT
+========================================
+Tópico: irrigacao01/telemetry
+Dispositivo identificado: irrigacao01
+
+>>> MENSAGEM VÁLIDA <<<
+Device ID: irrigacao01
+Sensor: ultrassonico
+Valor: 27.8 cm
+Sequência: 33717
+RSSI: -54 dBm
+Persistido no Redis (telemetria):
+  HSET  device:irrigacao01:state
+  ZADD  device:irrigacao01:history
+  HSET  device:irrigacao01:presence
+  SETEX device:irrigacao01:heartbeat
+
+========================================
+ NOVA MENSAGEM MQTT
+========================================
+Tópico: irrigacao01/state
+Dispositivo identificado: irrigacao01
+
+>>> MENSAGEM VÁLIDA <<<
+Device ID: irrigacao01
+Atuador: bomba_simulada -> LIGADO
+Persistido no Redis (estado do atuador):
+  HSET  device:irrigacao01:state (atuador)
+  HSET  device:irrigacao01:presence
+  SETEX device:irrigacao01:heartbeat
+
+========================================
+ NOVA MENSAGEM MQTT
+========================================
+Tópico: irrigacao01/telemetry
+Dispositivo identificado: irrigacao01
+
+>>> MENSAGEM INVÁLIDA <<<
+- Quando valid=true, value deve ser numérico.
+- sequence deve ser inteiro >= 0.
+- wifiRssi ausente ou inválido.
+Registro salvo em logs/mensagens-invalidas.log (não persistido no Redis)
+
+========================================
+ NOVA MENSAGEM MQTT
+========================================
+Tópico: irrigacao01/availability
+Dispositivo identificado: irrigacao01
+
+>>> DISPONIBILIDADE <<<
+Device ID: irrigacao01
+Status: OFFLINE
+Persistido no Redis (disponibilidade):
+  HSET  device:irrigacao01:presence status=offline
+  DEL   device:irrigacao01:heartbeat

@@ -97,10 +97,10 @@ ESP32 → Broker MQTT → Gateway → Redis → API → Sistema Web
 - [ ] recepção de comandos MQTT;
 - [ ] acionamento da bomba ou LED;
 - [ ] confirmação da execução do comando;
-- [ ] gateway Node.js para validação das mensagens;
-- [ ] persistência de estado atual no Redis;
-- [ ] persistência do histórico;
-- [ ] registro de presença e último contato;
+- [x] gateway Node.js para validação das mensagens;
+- [x] persistência de estado atual no Redis;
+- [x] persistência do histórico;
+- [x] registro de presença e último contato;
 - [ ] API HTTP/JSON;
 - [ ] painel web;
 - [ ] indicador online/offline;
@@ -197,40 +197,29 @@ Exemplo:
 }
 ```
 
-## Modelo inicial no Redis
+## Modelo de dados no Redis (Entrega 5)
 
-Sugestão de chaves:
+Implementado em `broker-mqtt/redis-store.js`. Documentação completa da estrutura de chaves, das operações e das evidências: [`docs/entrega5-redis.md`](docs/entrega5-redis.md).
 
-```text
-device:reservatorio01:state
-device:reservatorio01:history
-device:reservatorio01:presence
-device:reservatorio01:commands
+Padrão de chave: `device:{deviceId}:{tipo}`. O `deviceId` é obtido do tópico MQTT (`{deviceId}/telemetry`).
+
+| Chave | Tipo | Conteúdo |
+|---|---|---|
+| `devices` | SET | Índice de dispositivos conhecidos |
+| `device:irrigacao01:state` | HASH | Estado atual: última leitura, estado da bomba e horário da atualização |
+| `device:irrigacao01:history` | SORTED SET | Histórico de leituras (score = timestamp em ms), limitado às 1000 mais recentes |
+| `device:irrigacao01:presence` | HASH | Status online/offline, último contato e último tópico |
+| `device:irrigacao01:heartbeat` | STRING + TTL 30 s | Existe enquanto o dispositivo se comunica |
+| `device:irrigacao01:commands` | — | Reservada para comandos (próxima entrega) |
+
+Consulta rápida:
+
+```bash
+cd broker-mqtt
+npm run consulta -- irrigacao01              # estado + presença + histórico
+npm run consulta -- irrigacao01 historico 20
+npm run teste                                # teste ponta a ponta MQTT -> Redis
 ```
-
-### Estado atual
-
-```text
-device:reservatorio01:state
-```
-
-Armazena a leitura mais recente, o estado da bomba e o horário da atualização.
-
-### Histórico
-
-```text
-device:reservatorio01:history
-```
-
-Armazena as leituras anteriores para consultas e geração de gráfico.
-
-### Presença
-
-```text
-device:reservatorio01:presence
-```
-
-Armazena o status do dispositivo e o último contato recebido.
 
 ## Endpoints planejados
 

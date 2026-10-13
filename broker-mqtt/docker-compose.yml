@@ -1,0 +1,18 @@
+# Sobe o Redis local para o gateway (Entrega 5)
+#   docker compose up -d
+#   docker exec -it redis-hidroponia redis-cli
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis-hidroponia
+    ports:
+      - "6379:6379"
+    # appendonly: grava em disco para não perder o
+    # histórico quando o Redis for reiniciado
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  redis-data:

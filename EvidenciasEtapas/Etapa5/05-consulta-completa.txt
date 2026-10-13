@@ -1,0 +1,53 @@
+# Execução real em 2026-10-13T23:23Z | Node v22.22.0 | Redis 7.0.15 | broker Aedes local
+# Comando: node consulta.js irrigacao01
+
+
+========================================
+ ESTADO ATUAL (HGETALL device:irrigacao01:state)
+========================================
+{
+  "deviceId": "irrigacao01",
+  "sensor": "ultrassonico",
+  "valid": true,
+  "value": 27.8,
+  "unit": "cm",
+  "sequence": 33717,
+  "uptimeMs": 140000,
+  "wifiRssi": -54,
+  "actuatorState": true,
+  "updatedAt": "2026-10-13T23:21:54.402Z",
+  "topic": "irrigacao01/telemetry",
+  "actuator": "bomba_simulada",
+  "lastRequestId": "cmd-1791933714552",
+  "actuatorUpdatedAt": "2026-10-13T23:21:54.555Z"
+}
+
+========================================
+ PRESENÇA (HGETALL device:irrigacao01:presence + TTL device:irrigacao01:heartbeat)
+========================================
+{
+  "deviceId": "irrigacao01",
+  "status": "offline",
+  "lastSeen": "2026-10-13T23:21:54.555Z",
+  "lastSeenMs": 1791933714555,
+  "lastTopic": "irrigacao01/availability",
+  "offlineAt": "2026-10-13T23:21:55.365Z",
+  "heartbeatTtlS": 0,
+  "online": false,
+  "secondsSinceLastSeen": 2
+}
+
+=> Dispositivo OFFLINE | último contato: 2026-10-13T23:21:54.555Z
+
+========================================
+ HISTÓRICO (ZRANGE device:irrigacao01:history 0 9 REV) — 5 registros no total
+========================================
+┌─────────┬────────────────────────────┬───────┬────────┬───────────┬──────┬───────┐
+│ (index) │ recebidoEm                 │ seq   │ valida │ valor     │ rssi │ bomba │
+├─────────┼────────────────────────────┼───────┼────────┼───────────┼──────┼───────┤
+│ 0       │ '2026-10-13T23:21:54.402Z' │ 33717 │ true   │ '27.8 cm' │ -54  │ 'ON'  │
+│ 1       │ '2026-10-13T23:21:54.250Z' │ 33716 │ true   │ '31.4 cm' │ -53  │ 'ON'  │
+│ 2       │ '2026-10-13T23:21:54.099Z' │ 33715 │ false  │ 'NULL'    │ -52  │ 'OFF' │
+│ 3       │ '2026-10-13T23:21:53.947Z' │ 33714 │ true   │ '38.9 cm' │ -51  │ 'OFF' │
+│ 4       │ '2026-10-13T23:21:53.785Z' │ 33713 │ true   │ '42.3 cm' │ -50  │ 'OFF' │
+└─────────┴────────────────────────────┴───────┴────────┴───────────┴──────┴───────┘

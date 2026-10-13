@@ -2,14 +2,30 @@ import mqtt from "mqtt";
 import fs from "node:fs";
 import path from "node:path";
 
-const BROKER = "mqtt://127.0.0.1:1883";
+import {
+  REDIS_URL,
+  conectarRedis,
+  salvarTelemetria,
+  salvarEstadoAtuador,
+  salvarDisponibilidade,
+  fecharRedis
+} from "./redis-store.js";
+
+const BROKER =
+  process.env.MQTT_URL || "mqtt://127.0.0.1:1883";
+
 const CLIENT_ID = "gateway-node-iot3";
 
+// Tópicos assinados ("+" = qualquer deviceId)
 const TOPIC_TELEMETRY = "+/telemetry";
+const TOPIC_STATE = "+/state";
+const TOPIC_AVAILABILITY = "+/availability";
 
-const client = mqtt.connect(BROKER, {
-  clientId: CLIENT_ID
-});
+const TOPICOS = [
+  TOPIC_TELEMETRY,
+  TOPIC_STATE,
+  TOPIC_AVAILABILITY
+];
 
 const LOG_DIR = path.resolve("logs");
 
@@ -19,21 +35,47 @@ const LOG_VALIDAS =
 const LOG_INVALIDAS =
   path.join(LOG_DIR, "mensagens-invalidas.log");
 
+const LOG_FALHAS_REDIS =
+  path.join(LOG_DIR, "falhas-redis.log");
+
 fs.mkdirSync(LOG_DIR, {
   recursive: true
+});
+
+
+// ======================================================
+// CONEXÃO COM O REDIS
+// ------------------------------------------------------
+// A conexão é iniciada em segundo plano: se o Redis
+// estiver fora do ar, o gateway continua recebendo e
+// validando MQTT e registra a falha em log.
+// ======================================================
+
+const redis = await conectarRedis({
+  aguardar: false
+});
+
+
+// ======================================================
+// CONEXÃO COM O BROKER MQTT
+// ======================================================
+
+const client = mqtt.connect(BROKER, {
+  clientId: CLIENT_ID
 });
 
 client.on("connect", () => {
 
   console.log("========================================");
-  console.log(" GATEWAY MQTT INICIADO");
+  console.log(" GATEWAY MQTT + REDIS INICIADO");
   console.log("========================================");
 
   console.log(`Broker: ${BROKER}`);
+  console.log(`Redis: ${REDIS_URL}`);
   console.log(`Client ID: ${CLIENT_ID}`);
 
   client.subscribe(
-    TOPIC_TELEMETRY,
+    TOPICOS,
     {
       qos: 1
     },
@@ -41,16 +83,16 @@ client.on("connect", () => {
 
       if (error) {
         console.error(
-          "Erro ao assinar tópico:",
+          "Erro ao assinar tópicos:",
           error.message
         );
 
         return;
       }
 
-      console.log(
-        `Tópico assinado: ${TOPIC_TELEMETRY}`
-      );
+      TOPICOS.forEach((topico) => {
+        console.log(`Tópico assinado: ${topico}`);
+      });
 
       console.log(
         "Aguardando mensagens..."
@@ -59,7 +101,7 @@ client.on("connect", () => {
   );
 });
 
-client.on("message", (topic, payload) => {
+client.on("message", (topic, payload, packet) => {
 
   console.log();
   console.log("========================================");
@@ -74,9 +116,15 @@ client.on("message", (topic, payload) => {
   const partes =
     topic.split("/");
 
+  const tiposValidos = [
+    "telemetry",
+    "state",
+    "availability"
+  ];
+
   if (
     partes.length !== 2 ||
-    partes[1] !== "telemetry"
+    !tiposValidos.includes(partes[1])
   ) {
 
     registrarInvalida({
@@ -90,12 +138,32 @@ client.on("message", (topic, payload) => {
     return;
   }
 
-  const deviceIdTopico =
-    partes[0];
+  const [deviceIdTopico, tipo] =
+    partes;
 
   console.log(
     `Dispositivo identificado: ${deviceIdTopico}`
   );
+
+  // ----------------------------------------------------
+  // AVAILABILITY: texto simples "online" / "offline"
+  // ----------------------------------------------------
+
+  if (tipo === "availability") {
+
+    tratarDisponibilidade(
+      topic,
+      deviceIdTopico,
+      texto,
+      packet.retain
+    );
+
+    return;
+  }
+
+  // ----------------------------------------------------
+  // TELEMETRY e STATE: JSON
+  // ----------------------------------------------------
 
   let mensagem;
 
@@ -119,10 +187,9 @@ client.on("message", (topic, payload) => {
   }
 
   const erros =
-    validarTelemetria(
-      mensagem,
-      deviceIdTopico
-    );
+    tipo === "telemetry"
+      ? validarTelemetria(mensagem, deviceIdTopico)
+      : validarEstado(mensagem, deviceIdTopico);
 
   if (erros.length > 0) {
 
@@ -139,9 +206,49 @@ client.on("message", (topic, payload) => {
   registrarValida(
     topic,
     deviceIdTopico,
+    tipo,
     mensagem
   );
+
+  if (tipo === "telemetry") {
+
+    persistir(
+      "telemetria",
+      () => salvarTelemetria(redis, {
+        topic,
+        deviceId: deviceIdTopico,
+        mensagem
+      }),
+      [
+        `HSET  device:${deviceIdTopico}:state`,
+        `ZADD  device:${deviceIdTopico}:history`,
+        `HSET  device:${deviceIdTopico}:presence`,
+        `SETEX device:${deviceIdTopico}:heartbeat`
+      ]
+    );
+
+  } else {
+
+    persistir(
+      "estado do atuador",
+      () => salvarEstadoAtuador(redis, {
+        topic,
+        deviceId: deviceIdTopico,
+        mensagem
+      }),
+      [
+        `HSET  device:${deviceIdTopico}:state (atuador)`,
+        `HSET  device:${deviceIdTopico}:presence`,
+        `SETEX device:${deviceIdTopico}:heartbeat`
+      ]
+    );
+  }
 });
+
+
+// ======================================================
+// VALIDAÇÕES
+// ======================================================
 
 function validarTelemetria(
   mensagem,
@@ -161,23 +268,7 @@ function validarTelemetria(
     ];
   }
 
-  if (
-    typeof mensagem.deviceId !== "string" ||
-    mensagem.deviceId.trim() === ""
-  ) {
-
-    erros.push(
-      "Campo deviceId ausente ou inválido."
-    );
-
-  } else if (
-    mensagem.deviceId !== deviceIdTopico
-  ) {
-
-    erros.push(
-      "deviceId da mensagem não corresponde ao tópico."
-    );
-  }
+  validarDeviceId(mensagem, deviceIdTopico, erros);
 
   if (
     typeof mensagem.sensor !== "string" ||
@@ -262,9 +353,215 @@ function validarTelemetria(
   return erros;
 }
 
+// Mensagem publicada pelo ESP32 em {id}/state
+// { deviceId, actuator, state, requestId }
+function validarEstado(
+  mensagem,
+  deviceIdTopico
+) {
+
+  const erros = [];
+
+  if (
+    typeof mensagem !== "object" ||
+    mensagem === null ||
+    Array.isArray(mensagem)
+  ) {
+
+    return [
+      "A mensagem deve ser um objeto JSON."
+    ];
+  }
+
+  validarDeviceId(mensagem, deviceIdTopico, erros);
+
+  if (
+    typeof mensagem.actuator !== "string" ||
+    mensagem.actuator.trim() === ""
+  ) {
+
+    erros.push(
+      "Campo actuator ausente ou inválido."
+    );
+  }
+
+  if (
+    typeof mensagem.state !== "boolean"
+  ) {
+
+    erros.push(
+      "Campo state deve ser boolean."
+    );
+  }
+
+  return erros;
+}
+
+function validarDeviceId(
+  mensagem,
+  deviceIdTopico,
+  erros
+) {
+
+  if (
+    typeof mensagem.deviceId !== "string" ||
+    mensagem.deviceId.trim() === ""
+  ) {
+
+    erros.push(
+      "Campo deviceId ausente ou inválido."
+    );
+
+  } else if (
+    mensagem.deviceId !== deviceIdTopico
+  ) {
+
+    erros.push(
+      "deviceId da mensagem não corresponde ao tópico."
+    );
+  }
+}
+
+
+// ======================================================
+// DISPONIBILIDADE (online / offline / Last Will)
+// ======================================================
+
+function tratarDisponibilidade(
+  topic,
+  deviceId,
+  texto,
+  retained
+) {
+
+  let status =
+    texto.trim().toLowerCase();
+
+  // Aceita também {"status":"online"}
+  if (status.startsWith("{")) {
+
+    try {
+      status = String(
+        JSON.parse(texto).status
+      ).toLowerCase();
+    } catch {
+      status = "";
+    }
+  }
+
+  if (
+    status !== "online" &&
+    status !== "offline"
+  ) {
+
+    registrarInvalida({
+      topic,
+      deviceId,
+      payload: texto,
+      erros: [
+        "Disponibilidade deve ser \"online\" ou \"offline\"."
+      ]
+    });
+
+    return;
+  }
+
+  console.log();
+  console.log(">>> DISPONIBILIDADE <<<");
+  console.log(`Device ID: ${deviceId}`);
+  console.log(
+    `Status: ${status.toUpperCase()}` +
+    (retained ? " (mensagem retida)" : "")
+  );
+
+  persistir(
+    "disponibilidade",
+    () => salvarDisponibilidade(redis, {
+      topic,
+      deviceId,
+      status,
+      retained
+    }),
+    [
+      `HSET  device:${deviceId}:presence status=${status}`,
+      status === "offline"
+        ? `DEL   device:${deviceId}:heartbeat`
+        : `SETEX device:${deviceId}:heartbeat`
+    ]
+  );
+}
+
+
+// ======================================================
+// PERSISTÊNCIA COM TRATAMENTO DE FALHA
+// ======================================================
+
+async function persistir(
+  descricao,
+  operacao,
+  comandos
+) {
+
+  if (!redis.isReady) {
+
+    registrarFalhaRedis(
+      descricao,
+      "Redis indisponível no momento."
+    );
+
+    return;
+  }
+
+  try {
+
+    await operacao();
+
+    console.log(
+      `Persistido no Redis (${descricao}):`
+    );
+
+    comandos.forEach((comando) => {
+      console.log(`  ${comando}`);
+    });
+
+  } catch (error) {
+
+    registrarFalhaRedis(
+      descricao,
+      error.message
+    );
+  }
+}
+
+function registrarFalhaRedis(
+  descricao,
+  motivo
+) {
+
+  console.error(
+    `!!! Falha ao persistir ${descricao}: ${motivo}`
+  );
+
+  fs.appendFileSync(
+    LOG_FALHAS_REDIS,
+    JSON.stringify({
+      at: new Date().toISOString(),
+      operacao: descricao,
+      motivo
+    }) + "\n",
+    "utf8"
+  );
+}
+
+
+// ======================================================
+// LOGS EM ARQUIVO
+// ======================================================
+
 function registrarValida(
   topic,
   deviceId,
+  tipo,
   mensagem
 ) {
 
@@ -285,34 +582,41 @@ function registrarValida(
     `Device ID: ${deviceId}`
   );
 
-  console.log(
-    `Sensor: ${mensagem.sensor}`
-  );
+  if (tipo === "telemetry") {
 
-  console.log(
-    `Valor: ${
-      mensagem.value === null
-        ? "NULL"
-        : mensagem.value
-    } ${mensagem.unit}`
-  );
+    console.log(
+      `Sensor: ${mensagem.sensor}`
+    );
 
-  console.log(
-    `Sequência: ${mensagem.sequence}`
-  );
+    console.log(
+      `Valor: ${
+        mensagem.value === null
+          ? "NULL"
+          : mensagem.value
+      } ${mensagem.unit}`
+    );
 
-  console.log(
-    `RSSI: ${mensagem.wifiRssi} dBm`
-  );
+    console.log(
+      `Sequência: ${mensagem.sequence}`
+    );
+
+    console.log(
+      `RSSI: ${mensagem.wifiRssi} dBm`
+    );
+
+  } else {
+
+    console.log(
+      `Atuador: ${mensagem.actuator} -> ${
+        mensagem.state ? "LIGADO" : "DESLIGADO"
+      }`
+    );
+  }
 
   fs.appendFileSync(
     LOG_VALIDAS,
     JSON.stringify(registro) + "\n",
     "utf8"
-  );
-
-  console.log(
-    "Registro salvo em logs/mensagens-validas.log"
   );
 }
 
@@ -348,7 +652,7 @@ function registrarInvalida({
   );
 
   console.log(
-    "Registro salvo em logs/mensagens-invalidas.log"
+    "Registro salvo em logs/mensagens-invalidas.log (não persistido no Redis)"
   );
 }
 
@@ -358,4 +662,27 @@ client.on("error", (error) => {
     "Erro MQTT:",
     error.message
   );
+});
+
+
+// ======================================================
+// ENCERRAMENTO
+// ======================================================
+
+process.on("SIGINT", async () => {
+
+  console.log();
+  console.log("Encerrando gateway...");
+
+  client.end();
+
+  try {
+    if (redis.isOpen) {
+      await fecharRedis(redis);
+    }
+  } catch {
+    // ignorado no encerramento
+  }
+
+  process.exit(0);
 });

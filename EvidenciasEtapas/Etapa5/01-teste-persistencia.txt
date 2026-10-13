@@ -1,0 +1,98 @@
+# Execução real em 2026-10-13T23:23Z | Node v22.22.0 | Redis 7.0.15 | broker Aedes local
+# Comando: node teste-persistencia.js
+
+
+========================================
+ 1) PUBLICANDO DISPONIBILIDADE ONLINE
+========================================
+-> irrigacao01/availability: online
+
+========================================
+ 2) PUBLICANDO 5 TELEMETRIAS
+========================================
+-> seq=33713 value=42.3 valid=true
+-> seq=33714 value=38.9 valid=true
+-> seq=33715 value=null valid=false
+-> seq=33716 value=31.4 valid=true
+-> seq=33717 value=27.8 valid=true
+
+========================================
+ 3) PUBLICANDO ESTADO DO ATUADOR
+========================================
+-> bomba_simulada = true (requestId cmd-1791933714552)
+
+========================================
+ 4) PUBLICANDO TELEMETRIA INVÁLIDA
+========================================
+-> value="cinquenta", sequence=-1 (inválida)
+
+========================================
+ 5) CONFERINDO O REDIS
+========================================
+HGETALL device:irrigacao01:state
+{
+  "deviceId": "irrigacao01",
+  "sensor": "ultrassonico",
+  "valid": true,
+  "value": 27.8,
+  "unit": "cm",
+  "sequence": 33717,
+  "uptimeMs": 140000,
+  "wifiRssi": -54,
+  "actuatorState": true,
+  "updatedAt": "2026-10-13T23:21:54.402Z",
+  "topic": "irrigacao01/telemetry",
+  "actuator": "bomba_simulada",
+  "lastRequestId": "cmd-1791933714552",
+  "actuatorUpdatedAt": "2026-10-13T23:21:54.555Z"
+}
+[OK]    Estado atual guarda a última leitura  ->  sequence=33717, value=27.8
+[OK]    Estado atual guarda a confirmação do atuador  ->  actuatorState=true, lastRequestId=cmd-1791933714552
+[OK]    Histórico recebeu exatamente as 5 leituras válidas (inválida descartada)  ->  ZCARD antes=0, depois=5
+
+ZRANGE device:irrigacao01:history 0 4 REV
+┌─────────┬────────────────────────────┬──────────┬───────┬───────┬──────┬──────────┬──────────┬───────────────┐
+│ (index) │ receivedAt                 │ sequence │ valid │ value │ unit │ wifiRssi │ uptimeMs │ actuatorState │
+├─────────┼────────────────────────────┼──────────┼───────┼───────┼──────┼──────────┼──────────┼───────────────┤
+│ 0       │ '2026-10-13T23:21:54.402Z' │ 33717    │ true  │ 27.8  │ 'cm' │ -54      │ 140000   │ true          │
+│ 1       │ '2026-10-13T23:21:54.250Z' │ 33716    │ true  │ 31.4  │ 'cm' │ -53      │ 135000   │ true          │
+│ 2       │ '2026-10-13T23:21:54.099Z' │ 33715    │ false │ null  │ 'cm' │ -52      │ 130000   │ false         │
+│ 3       │ '2026-10-13T23:21:53.947Z' │ 33714    │ true  │ 38.9  │ 'cm' │ -51      │ 125000   │ false         │
+│ 4       │ '2026-10-13T23:21:53.785Z' │ 33713    │ true  │ 42.3  │ 'cm' │ -50      │ 120000   │ false         │
+└─────────┴────────────────────────────┴──────────┴───────┴───────┴──────┴──────────┴──────────┴───────────────┘
+[OK]    Histórico recupera as leituras na ordem enviada  ->  enviadas=33713,33714,33715,33716,33717 | recuperadas=33713,33714,33715,33716,33717
+[OK]    Leitura inválida do sensor ficou registrada como value=null
+
+HGETALL device:irrigacao01:presence  +  TTL device:irrigacao01:heartbeat
+{
+  "deviceId": "irrigacao01",
+  "status": "online",
+  "lastSeen": "2026-10-13T23:21:54.555Z",
+  "lastSeenMs": 1791933714555,
+  "lastTopic": "irrigacao01/state",
+  "heartbeatTtlS": 29,
+  "online": true,
+  "secondsSinceLastSeen": 1
+}
+[OK]    Presença ONLINE com último contato recente  ->  status=online, lastSeen=2026-10-13T23:21:54.555Z, ttl=29s
+
+========================================
+ 6) SIMULANDO QUEDA DO DISPOSITIVO (LAST WILL)
+========================================
+-> conexão do dispositivo derrubada sem DISCONNECT
+{
+  "deviceId": "irrigacao01",
+  "status": "offline",
+  "lastSeen": "2026-10-13T23:21:54.555Z",
+  "lastSeenMs": 1791933714555,
+  "lastTopic": "irrigacao01/availability",
+  "offlineAt": "2026-10-13T23:21:55.365Z",
+  "heartbeatTtlS": 0,
+  "online": false,
+  "secondsSinceLastSeen": 2
+}
+[OK]    Last Will marcou o dispositivo como OFFLINE e removeu o heartbeat  ->  status=offline, offlineAt=2026-10-13T23:21:55.365Z, lastSeen=2026-10-13T23:21:54.555Z
+
+========================================
+ RESULTADO: TODAS AS VERIFICAÇÕES PASSARAM
+========================================

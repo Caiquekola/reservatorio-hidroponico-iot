@@ -1,0 +1,100 @@
+# Execução real em 2026-10-13T23:23Z | Node v22.22.0 | Redis 7.0.15 | broker Aedes local
+# Comando: node broker.js
+
+=================================
+ Broker MQTT iniciado
+ Porta: 1883
+=================================
+Cliente conectado: gateway-node-iot3
+Cliente gateway-node-iot3 assinou:
+  +/telemetry
+  +/state
+  +/availability
+Cliente conectado: irrigacao01-teste
+
+Mensagem recebida:
+Cliente: irrigacao01-teste
+Topico: irrigacao01/availability
+Payload: online
+
+Mensagem recebida:
+Cliente: irrigacao01-teste
+Topico: irrigacao01/telemetry
+Payload: {"deviceId":"irrigacao01","sensor":"ultrassonico","valid":true,"value":42.3,"unit":"cm","sequence":33713,"uptimeMs":120000,"wifiRssi":-50,"actuatorState":false}
+
+Mensagem recebida:
+Cliente: irrigacao01-teste
+Topico: irrigacao01/telemetry
+Payload: {"deviceId":"irrigacao01","sensor":"ultrassonico","valid":true,"value":38.9,"unit":"cm","sequence":33714,"uptimeMs":125000,"wifiRssi":-51,"actuatorState":false}
+
+Mensagem recebida:
+Cliente: irrigacao01-teste
+Topico: irrigacao01/telemetry
+Payload: {"deviceId":"irrigacao01","sensor":"ultrassonico","valid":false,"value":null,"unit":"cm","sequence":33715,"uptimeMs":130000,"wifiRssi":-52,"actuatorState":false}
+
+Mensagem recebida:
+Cliente: irrigacao01-teste
+Topico: irrigacao01/telemetry
+Payload: {"deviceId":"irrigacao01","sensor":"ultrassonico","valid":true,"value":31.4,"unit":"cm","sequence":33716,"uptimeMs":135000,"wifiRssi":-53,"actuatorState":true}
+
+Mensagem recebida:
+Cliente: irrigacao01-teste
+Topico: irrigacao01/telemetry
+Payload: {"deviceId":"irrigacao01","sensor":"ultrassonico","valid":true,"value":27.8,"unit":"cm","sequence":33717,"uptimeMs":140000,"wifiRssi":-54,"actuatorState":true}
+
+Mensagem recebida:
+Cliente: irrigacao01-teste
+Topico: irrigacao01/state
+Payload: {"deviceId":"irrigacao01","actuator":"bomba_simulada","state":true,"requestId":"cmd-1791933714552"}
+
+Mensagem recebida:
+Cliente: irrigacao01-teste
+Topico: irrigacao01/telemetry
+Payload: {"deviceId":"irrigacao01","sensor":"ultrassonico","valid":true,"value":"cinquenta","unit":"cm","sequence":-1,"uptimeMs":1,"wifiRssi":"forte"}
+Cliente desconectado: irrigacao01-teste
+
+Mensagem recebida:
+Cliente: irrigacao01-teste
+Topico: irrigacao01/availability
+Payload: offline
+Cliente conectado: pub-1791933725701
+
+Mensagem recebida:
+Cliente: pub-1791933725701
+Topico: irrigacao01/telemetry
+Payload: {"deviceId":"irrigacao01","sensor":"ultrassonico","valid":true,"value":55.5,"unit":"cm","sequence":90001,"uptimeMs":200000,"wifiRssi":-49,"actuatorState":false}
+Cliente desconectado: pub-1791933725701
+Cliente conectado: pub-1791933729985
+
+Mensagem recebida:
+Cliente: pub-1791933729985
+Topico: irrigacao01/telemetry
+Payload: {"deviceId":"irrigacao01","sensor":"ultrassonico","valid":true,"value":56.1,"unit":"cm","sequence":90002,"uptimeMs":200000,"wifiRssi":-49,"actuatorState":false}
+Cliente desconectado: pub-1791933729985
+Cliente conectado: publisher-irrigacao01
+
+Mensagem recebida:
+Cliente: publisher-irrigacao01
+Topico: irrigacao01/telemetry
+Payload: {"deviceId":"irrigacao01","sensor":"ultrassonico","valid":true,"durationUs":2915,"value":71,"unit":"cm","sequence":1,"uptimeMs":1791933747830,"wifiRssi":-51,"actuatorState":false}
+
+Mensagem recebida:
+Cliente: publisher-irrigacao01
+Topico: irrigacao01/state
+Payload: {"deviceId":"irrigacao01","actuator":"bomba_simulada","state":true,"requestId":"manual-1791933747831"}
+
+Mensagem recebida:
+Cliente: publisher-irrigacao01
+Topico: irrigacao01/telemetry
+Payload: {"deviceId":"irrigacao01","sensor":"ultrassonico","valid":true,"durationUs":2915,"value":20.5,"unit":"cm","sequence":2,"uptimeMs":1791933747831,"wifiRssi":-51,"actuatorState":true}
+
+Mensagem recebida:
+Cliente: publisher-irrigacao01
+Topico: irrigacao01/availability
+Payload: online
+Cliente desconectado: publisher-irrigacao01
+
+Mensagem recebida:
+Cliente: publisher-irrigacao01
+Topico: irrigacao01/availability
+Payload: offline
